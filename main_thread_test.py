@@ -3,7 +3,7 @@ import queue
 import time
 import json
 from abc import ABC, abstractmethod
-from typing import Optional, Dict, Any, Callable, List
+from typing import Optional, Dict, Any, List
 from datetime import datetime
 
 
@@ -46,7 +46,6 @@ class MonitorBase(threading.Thread, ABC):
     def _dynamic_wait(self, start_time: float) -> None:
         """动态等待逻辑"""
         while not self.end_event.is_set():
-            # elapsed = time.monotonic() - start_time
             elapsed = self.sys_clock.get_time() - start_time
             remaining = self._base_sleep_time - elapsed
 
@@ -65,7 +64,6 @@ class MonitorBase(threading.Thread, ABC):
             self.running_event.wait()
             if self.end_event.is_set():  # 及时结束事件
                 break
-            # start_time = time.monotonic()
             start_time = self.sys_clock.get_time()
             try:
                 self.monitor_task()
@@ -82,10 +80,7 @@ class MonitorBase(threading.Thread, ABC):
             "monitor_type": self.monitor_type,
             "details": log_details,
         }
-        # self.buffer_queue.put(json.dumps(log))
         self.buffer_queue.put(log)
-        # log_entry = self.buffer_queue.get()
-        # print(log_entry)
 
     def _add_log_error(self, error_msg: str) -> None:
         """记录错误日志"""
@@ -98,8 +93,8 @@ class MonitorBase(threading.Thread, ABC):
 
     def can_flush(self) -> bool:
         """检查是否可以立即执行日志缓冲区"""
-        # print(f"{self.monitor_type}: can_flush: {not self.buffer_queue.empty()}")
-        return not self.buffer_queue.empty()  # 使用empty()方法检查队列是否为空
+        """默认所有模块都可以立即执行日志缓冲区，各模块可根据自身情况进行覆写"""
+        return True
 
     def flush_buffer(self) -> List[Dict[str, Any]]:
         """取出并清空缓冲区"""
@@ -306,7 +301,6 @@ class ModuleController:
             12,
         )
 
-        # self.logger = Logger(self.log_queue, self.end_event)
         self.running_event.set()
 
     def start(self) -> None:
