@@ -41,9 +41,7 @@ module_registry是核心字典结构，用于：
 
 ## 安装要求
 - Python 3.7+
-- 依赖库：
-  - `pywin32` (Windows系统API访问)
-  - `pynput` (键盘和鼠标监控)
+- 依赖库：暂无
 
 ## 使用说明
 1. 克隆项目仓库
