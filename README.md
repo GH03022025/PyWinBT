@@ -1,7 +1,7 @@
-# PyWinBT_test - PC行为分析监控系统框架
+# PyWinBT - PC行为分析监控系统框架
 
 ## 项目简介
-PyWinBT_test是一个基于Python的多线程PC行为分析监控系统框架，用于收集和分析用户计算机操作行为数据。系统采用模块化设计，支持多种监控类型，包括进程、窗口焦点、鼠标、键盘和剪贴板活动。
+PyWinBT是一个基于Python的多线程PC行为分析监控系统框架，用于收集和分析用户计算机操作行为数据。系统采用模块化设计，支持多种监控类型，包括进程、窗口焦点、鼠标、键盘和剪贴板活动。
 
 ## 功能特点
 - **多线程架构**：高效并发执行多个监控任务
@@ -135,20 +135,31 @@ monitor_registry = {
 
 #### 完整示例
 ```python
-class NetworkMonitor(MonitorBase):
-    MODULE_IDENTIFIER = "Network"
-    
-    def __init__(self, running_event, end_event, sys_clock, module_registry, uid):
+class MouseMonitor(MonitorBase):  # 示例鼠标监控器
+    MODULE_IDENTIFIER = "Mouse"  # 定义模块标识符
+
+    def __init__(
+        self,
+        running_event: threading.Event,  # 持续运行事件
+        end_event: threading.Event,  # 线程结束事件
+        sys_clock: SysClock,  # 系统时钟，来自 System.py 中的 SysClock 类
+        module_registry: dict[str, dict | Any],  # 模块注册表
+        uid: str,
+        sleep_time: float = 2.0,  # 休眠时间
+    ):
         super().__init__()
-        self.sleep_time = 10.0
-        # 其他初始化
-        
-    def perform_monitor_task(self):
-        conns = get_network_connections()  # 获取网络连接
-        self.add_log_to_buffer({
-            "connections": conns,
-            "status": "active"
-        })
+        self.running_event = running_event
+        self.end_event = end_event
+        self.sys_clock = sys_clock
+        self.module_registry = module_registry
+        self.sleep_time = sleep_time
+        self.uid = uid
+        self.verify_consts_and_params()  # 验证常量和参数
+
+    def perform_monitor_task(self):  # 实现抽象方法
+        self.add_log_to_buffer({"details": "Mouse monitor task performed"})
+        self.module_registry["Monitor"]["Process"].trigger()  # 立即触发 FocusWin 监控器
+        self.module_registry["Monitor"]["FocusWin"].trigger()  # 立即触发 FocusWin 监控器
 ```
 
 ### 扩展系统功能

@@ -63,7 +63,7 @@ class Logger(ModuleBase):  # 日志记录器
         )  # 返回排序完成的日志
 
 
-class ProcessMonitor(MonitorBase):  # 进程监控器
+class ProcessMonitor(MonitorBase):  # 示例进程监控器
     MODULE_IDENTIFIER = "Process"  # 定义模块标识符
 
     def __init__(
@@ -88,7 +88,7 @@ class ProcessMonitor(MonitorBase):  # 进程监控器
         self.add_log_to_buffer({"details": "Process monitor task performed"})
 
 
-class FocusWinMonitor(MonitorBase):  # 焦点窗口监控器
+class FocusWinMonitor(MonitorBase):  # 示例焦点窗口监控器
     MODULE_IDENTIFIER = "FocusWin"  # 定义模块标识符
 
     def __init__(
@@ -113,7 +113,7 @@ class FocusWinMonitor(MonitorBase):  # 焦点窗口监控器
         self.add_log_to_buffer({"details": "FocusWin monitor task performed"})
 
 
-class MouseMonitor(MonitorBase):  # 鼠标监控器
+class MouseMonitor(MonitorBase):  # 示例鼠标监控器
     MODULE_IDENTIFIER = "Mouse"  # 定义模块标识符
 
     def __init__(
@@ -136,9 +136,11 @@ class MouseMonitor(MonitorBase):  # 鼠标监控器
 
     def perform_monitor_task(self):  # 实现抽象方法
         self.add_log_to_buffer({"details": "Mouse monitor task performed"})
+        self.module_registry["Monitor"]["ProcessMonitor"].trigger()  # 立即触发 Process 监控器
+        self.module_registry["Monitor"]["FocusWinMonitor"].trigger()  # 立即触发 FocusWin 监控器
 
 
-class KeyboardMonitor(MonitorBase):  # 键盘监控器
+class KeyboardMonitor(MonitorBase):  # 示例键盘监控器
     MODULE_IDENTIFIER = "Keyboard"  # 定义模块标识符
 
     def __init__(
@@ -161,9 +163,11 @@ class KeyboardMonitor(MonitorBase):  # 键盘监控器
 
     def perform_monitor_task(self):  # 实现抽象方法
         self.add_log_to_buffer({"details": "Keyboard monitor task performed"})
+        self.module_registry["Monitor"]["ProcessMonitor"].trigger()  # 立即触发 Process 监控器
+        self.module_registry["Monitor"]["FocusWinMonitor"].trigger()  # 立即触发 FocusWin 监控器
 
 
-class ClipboardMonitor(MonitorBase):  # 剪贴板监控器
+class ClipboardMonitor(MonitorBase):  # 示例剪贴板监控器
     MODULE_IDENTIFIER = "Clipboard"  # 定义模块标识符
 
     def __init__(
