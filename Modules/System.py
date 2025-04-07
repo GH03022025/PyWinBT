@@ -103,7 +103,7 @@ class SysManager:  # 系统管理器
 
         try:
             while not self.end_event.is_set():  # 持续运行
-                time.sleep(self.sleep_time)  # 休眠一定时间
+                time.sleep(self.sleep_time)  # 休眠一定时间，暂时用来模拟因外部状况中断
                 self.running_event.clear()  # 暂时停止运行
 
                 choice = input(
