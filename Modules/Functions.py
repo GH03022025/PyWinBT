@@ -23,7 +23,7 @@ class Logger(ModuleBase):  # 日志记录器
         end_event: threading.Event,  # 线程结束事件
         sys_clock: SysClock,  # 系统时钟，来自 System.py 中的 SysClock 类
         module_registry: dict[str, dict | Any],  # 模块注册表
-        sleep_time: float = 12.0,  # 休眠时间，默认12秒
+        sleep_time: float = 4.0,  # 休眠时间，默认4秒
     ):
         super().__init__()
 
@@ -39,14 +39,23 @@ class Logger(ModuleBase):  # 日志记录器
         self.collect_logs()  # 收集日志
 
     def collect_logs(self):  # 收集日志
-        all_monitors_ready = all(
-            monitor.can_get_and_flush_buffer()
-            for monitor in self.module_registry["Monitor"].values()
-        )  # 通过模块注册表中的监视器注册表检查模块状态
+        vote_for_flush = {}  # 初始化投票收集器
 
-        if all_monitors_ready:  # 所有模块都可以获取日志
-            for monitor in self.module_registry["Monitor"].values():  # 逐个获取日志
-                self.logs_collected += monitor.get_and_flush_buffer()  # 获取日志
+        for monitor in self.module_registry["Monitor"].values():  # 收集投票
+            vote_for_flush.update(monitor.can_get_and_flush_buffer())
+
+        reject_collect = any(vote == "Disagree" for vote in vote_for_flush.values())
+        all_skip_collect = all(vote == "Skip" for vote in vote_for_flush.values())
+
+        if not reject_collect and not all_skip_collect:
+            self.logs_collected += sum(
+                (
+                    monitor.get_and_flush_buffer()
+                    for monitor in self.module_registry["Monitor"].values()
+                    if vote_for_flush[monitor.MODULE_IDENTIFIER] == "Agree"
+                ),
+                [],
+            )  # 使用列表推导式获取所有同意的日志，并使用sum函数合并列表
 
             logs_sorted = self.sort_logs_by_timestamp(
                 self.logs_collected
@@ -77,7 +86,7 @@ class ProcessMonitor(MonitorBase):  # 示例进程监控器
         sys_clock: SysClock,  # 系统时钟，来自 System.py 中的 SysClock 类
         module_registry: dict[str, dict | Any],  # 模块注册表
         uid: str,
-        sleep_time: float = 5.0,  # 休眠时间
+        sleep_time: float = 1.0,  # 休眠时间
     ):
         super().__init__()
         self.running_event = running_event
@@ -153,12 +162,6 @@ class ProcessMonitor(MonitorBase):  # 示例进程监控器
                     timestamp,
                 )  # 记录错误日志
 
-    def can_get_and_flush_buffer(self):
-        if self.buffer_queue.empty():
-            return False
-        else:
-            return True
-
 
 class FocusWinMonitor(MonitorBase):  # 示例焦点窗口监控器
     MODULE_IDENTIFIER = "FocusWin"  # 定义模块标识符
@@ -170,7 +173,7 @@ class FocusWinMonitor(MonitorBase):  # 示例焦点窗口监控器
         sys_clock: SysClock,  # 系统时钟，来自 System.py 中的 SysClock 类
         module_registry: dict[str, dict | Any],  # 模块注册表
         uid: str,
-        sleep_time: float = 5.0,  # 休眠时间
+        sleep_time: float = 100.0,  # 休眠时间
     ):
         super().__init__()
         self.running_event = running_event
@@ -195,7 +198,7 @@ class MouseMonitor(MonitorBase):  # 示例鼠标监控器
         sys_clock: SysClock,  # 系统时钟，来自 System.py 中的 SysClock 类
         module_registry: dict[str, dict | Any],  # 模块注册表
         uid: str,
-        sleep_time: float = 2.0,  # 休眠时间
+        sleep_time: float = 100.0,  # 休眠时间
     ):
         super().__init__()
         self.running_event = running_event
@@ -226,7 +229,7 @@ class KeyboardMonitor(MonitorBase):  # 示例键盘监控器
         sys_clock: SysClock,  # 系统时钟，来自 System.py 中的 SysClock 类
         module_registry: dict[str, dict | Any],  # 模块注册表
         uid: str,
-        sleep_time: float = 2.0,  # 休眠时间
+        sleep_time: float = 1.0,  # 休眠时间
     ):
         super().__init__()
         self.running_event = running_event
@@ -257,7 +260,7 @@ class ClipboardMonitor(MonitorBase):  # 示例剪贴板监控器
         sys_clock: SysClock,  # 系统时钟，来自 System.py 中的 SysClock 类
         module_registry: dict[str, dict | Any],  # 模块注册表
         uid: str,
-        sleep_time: float = 2.0,  # 休眠时间
+        sleep_time: float = 1.0,  # 休眠时间
     ):
         super().__init__()
         self.running_event = running_event
