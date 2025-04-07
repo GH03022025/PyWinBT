@@ -1,8 +1,12 @@
 import threading
 import queue
 import json
-from typing import List, Any
+import time
+from typing import Any
 from datetime import datetime
+
+
+import psutil
 
 
 from Modules.Base import ModuleBase, MonitorBase
@@ -82,10 +86,78 @@ class ProcessMonitor(MonitorBase):  # 示例进程监控器
         self.module_registry = module_registry
         self.sleep_time = sleep_time
         self.uid = uid
+
         self.verify_consts_and_params()  # 验证常量和参数
 
+        self.history_pids = set()  # 历史进程ID集合，pid也可以作为key
+        self.history_processes = {}  # 历史进程集合，可通过key访问进程信息
+
     def perform_monitor_task(self):  # 实现抽象方法
-        self.add_log_to_buffer({"details": "Process monitor task performed"})
+        current_pids = set(psutil.pids())  # 当前进程ID集合
+        new_pids = current_pids - self.history_pids  # 新启动的进程ID集合
+        ended_pids = self.history_pids - current_pids  # 结束的进程ID集合
+        self.history_pids = current_pids  # 更新历史进程ID集合
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+
+        for pid in new_pids:  # 遍历新启动的进程
+            try:
+                process = psutil.Process(pid)  # 获取进程对象
+                process_name = process.name()  # 进程名称
+                create_time = round(process.create_time(), 3)  # 进程创建时间
+                self.history_processes[pid] = {
+                    "process_name": process_name,
+                    "create_time": create_time,
+                }  # 记录进程信息
+                self.add_log_to_buffer(
+                    {
+                        "pid": pid,
+                        "process_name": process_name,
+                        "event": "create",
+                        "create_time": create_time,
+                    },
+                    timestamp,
+                )  # 记录日志
+            except psutil.NoSuchProcess as e:
+                self.add_log_to_buffer(
+                    {
+                        "pid": pid,
+                        "event": "error",
+                        "error_msg": str(e),
+                    },
+                    timestamp,
+                )  # 记录错误日志
+
+        for pid in ended_pids:  # 遍历结束的进程
+            try:
+                process_info = self.history_processes.pop(pid)  # 拿出进程信息
+                process_name = process_info["process_name"]  # 进程名称
+                runtime = round(
+                    time.time() - process_info["create_time"], 3
+                )  # 进程运行时间
+                self.add_log_to_buffer(
+                    {
+                        "pid": pid,
+                        "process_name": process_name,
+                        "event": "kill",
+                        "runtime": runtime,
+                    },
+                    timestamp,
+                )  # 记录日志
+            except KeyError as e:
+                self.add_log_to_buffer(
+                    {
+                        "pid": pid,
+                        "event": "error",
+                        "error_msg": str(e),
+                    },
+                    timestamp,
+                )  # 记录错误日志
+
+    def can_get_and_flush_buffer(self):
+        if self.buffer_queue.empty():
+            return False
+        else:
+            return True
 
 
 class FocusWinMonitor(MonitorBase):  # 示例焦点窗口监控器
@@ -136,8 +208,12 @@ class MouseMonitor(MonitorBase):  # 示例鼠标监控器
 
     def perform_monitor_task(self):  # 实现抽象方法
         self.add_log_to_buffer({"details": "Mouse monitor task performed"})
-        self.module_registry["Monitor"]["ProcessMonitor"].trigger()  # 立即触发 Process 监控器
-        self.module_registry["Monitor"]["FocusWinMonitor"].trigger()  # 立即触发 FocusWin 监控器
+        self.module_registry["Monitor"][
+            "ProcessMonitor"
+        ].trigger()  # 立即触发 Process 监控器
+        self.module_registry["Monitor"][
+            "FocusWinMonitor"
+        ].trigger()  # 立即触发 FocusWin 监控器
 
 
 class KeyboardMonitor(MonitorBase):  # 示例键盘监控器
@@ -163,8 +239,12 @@ class KeyboardMonitor(MonitorBase):  # 示例键盘监控器
 
     def perform_monitor_task(self):  # 实现抽象方法
         self.add_log_to_buffer({"details": "Keyboard monitor task performed"})
-        self.module_registry["Monitor"]["ProcessMonitor"].trigger()  # 立即触发 Process 监控器
-        self.module_registry["Monitor"]["FocusWinMonitor"].trigger()  # 立即触发 FocusWin 监控器
+        self.module_registry["Monitor"][
+            "ProcessMonitor"
+        ].trigger()  # 立即触发 Process 监控器
+        self.module_registry["Monitor"][
+            "FocusWinMonitor"
+        ].trigger()  # 立即触发 FocusWin 监控器
 
 
 class ClipboardMonitor(MonitorBase):  # 示例剪贴板监控器
