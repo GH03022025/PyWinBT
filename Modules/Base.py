@@ -87,8 +87,13 @@ class MonitorBase(ModuleBase):  # 监控器基类
     def add_log_to_buffer(
         self,
         log_details: Dict[str, Any],
-        timestamp: str =datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"),
+        timestamp=None,  # 日志时间戳，允许外部传入覆写
     ) -> None:
+        if timestamp is None:  # 未传入时间戳
+            timestamp = datetime.now().strftime(
+                "%Y-%m-%d %H:%M:%S.%f"
+            )  # 自动生成时间戳
+
         log = {
             "uid": self.uid,
             "timestamp": timestamp,
@@ -98,7 +103,10 @@ class MonitorBase(ModuleBase):  # 监控器基类
         self.buffer_queue.put(log)  # 将日志添加进缓冲队列
 
     def can_get_and_flush_buffer(self) -> bool:  # 检查是否可以取出并清空缓存
-        return True
+        if self.buffer_queue.empty():
+            return {self.MODULE_IDENTIFIER: "Skip"}  # Skip：跳过
+        else:
+            return {self.MODULE_IDENTIFIER: "Agree"}  # Agree：同意，Disagree：不同意
 
     def get_and_flush_buffer(self) -> List[Dict[str, Any]]:  # 取出并清空缓存
         logs = []  # 用列表暂存
