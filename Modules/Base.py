@@ -13,6 +13,7 @@ class ModuleBase(threading.Thread, ABC):  # 功能性模块基类
 
         self.trigger_event = threading.Event()  # 该事件被设置后模块立即执行主循环
         self.daemon = True  # 开启守护线程
+        self.params = {}  # 模块参数，预留给子类的全局使用，不一定使用
 
     def verify_consts_and_params(self) -> None:  # 验证常量和参数
         if self.sleep_time is None:  # 必须定义休眠时间
@@ -83,11 +84,15 @@ class MonitorBase(ModuleBase):  # 监控器基类
         if self.uid is None:  # 必须定义唯一标识符
             raise NotImplementedError("uid must be provided")
 
-    def add_log_to_buffer(self, log_details: Dict[str, Any]) -> None:
+    def add_log_to_buffer(
+        self,
+        log_details: Dict[str, Any],
+        timestamp: str =datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"),
+    ) -> None:
         log = {
             "uid": self.uid,
-            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"),
-            "monitor_type": self.MODULE_IDENTIFIER,
+            "timestamp": timestamp,
+            "monitor": self.MODULE_IDENTIFIER,
             "details": log_details,
         }
         self.buffer_queue.put(log)  # 将日志添加进缓冲队列
