@@ -41,15 +41,14 @@ module_registry是核心字典结构，用于：
 
 ## 安装要求
 - Python 3.7+
-- 依赖库：暂无
+- 依赖库：
+  - psutil
 
 ## 使用说明
 1. 克隆项目仓库
-2. 安装依赖：暂无
+2. 安装依赖：`pip install psutil`
 3. 运行主程序：`python main.py`
-4. 系统启动后，按提示操作：
-   - 输入`y`继续监控
-   - 输入`n`安全关闭系统
+4. 系统将自动启动所有监控模块
 5. 日志文件将保存在`logs.json`中
 
 ## 模块说明
@@ -74,7 +73,7 @@ module_registry是核心字典结构，用于：
 ### 添加新监控模块规范
 
 #### 1. 模块基本要求
-- 必须继承`MonitorBase`基类
+- 必须继承`MonitorBase`基类(位于Modules/Base.py)
 - 必须定义`MODULE_IDENTIFIER`类变量作为唯一标识
 - 必须实现`perform_monitor_task()`方法
 
@@ -96,13 +95,7 @@ class CustomMonitor(MonitorBase):
 ```
 
 #### 3. 注册流程
-1. 在`SysManager.__init__()`中添加监控器到注册表：
-```python
-monitor_registry = {
-    "CustomMonitor": CustomMonitor
-    # 其他监控器...
-}
-```
+1. 在`SysManager.__init__()`(位于Modules/System.py)中添加监控器到注册表
 
 #### 4. 配置参数规范
 - `sleep_time`: 监控间隔(秒)
@@ -121,44 +114,11 @@ monitor_registry = {
 }
 ```
 
-#### 6. 测试建议
-- 单元测试需覆盖：
-  - 监控数据采集
-  - 异常处理
-  - 线程安全
-- 集成测试需验证：
-  - 模块注册流程
-  - 与其他模块的交互
-  - 日志格式一致性
+#### 6. 测试说明
+当前项目使用简单的功能测试，建议添加正式单元测试框架
 
 #### 完整示例
-```python
-class MouseMonitor(MonitorBase):  # 示例鼠标监控器
-    MODULE_IDENTIFIER = "Mouse"  # 定义模块标识符
-
-    def __init__(
-        self,
-        running_event: threading.Event,  # 持续运行事件
-        end_event: threading.Event,  # 线程结束事件
-        sys_clock: SysClock,  # 系统时钟，来自 System.py 中的 SysClock 类
-        module_registry: dict[str, dict | Any],  # 模块注册表
-        uid: str,
-        sleep_time: float = 2.0,  # 休眠时间
-    ):
-        super().__init__()
-        self.running_event = running_event
-        self.end_event = end_event
-        self.sys_clock = sys_clock
-        self.module_registry = module_registry
-        self.sleep_time = sleep_time
-        self.uid = uid
-        self.verify_consts_and_params()  # 验证常量和参数
-
-    def perform_monitor_task(self):  # 实现抽象方法
-        self.add_log_to_buffer({"details": "Mouse monitor task performed"})
-        self.module_registry["Monitor"]["Process"].trigger()  # 立即触发 FocusWin 监控器
-        self.module_registry["Monitor"]["FocusWin"].trigger()  # 立即触发 FocusWin 监控器
-```
+参考`ProcessMonitor`模块(位于Modules/Functions.py)
 
 ### 扩展系统功能
 1. 创建新类继承`ModuleBase`
