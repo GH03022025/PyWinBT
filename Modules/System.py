@@ -103,19 +103,34 @@ class SysManager:  # 系统管理器
 
         try:
             while not self.end_event.is_set():  # 持续运行
-                time.sleep(self.sleep_time)  # 休眠一定时间，暂时用来模拟因外部状况中断
-                self.running_event.clear()  # 暂时停止运行
+                time.sleep(self.sleep_time)  # 休眠一定时间
+                self.running_event.clear()  # 暂停运行
 
-                choice = input(
-                    f"\n监控系统已运行{self.sleep_time}秒，是否继续？(y继续/n结束/其他延后): "
-                ).lower()
+                print(f"\n监控系统已运行{self.sleep_time}秒")
+                choice = input("请选择操作:\n"
+                             "  y - 继续监控\n"
+                             "  n - 结束监控\n"
+                             "  s - 修改休眠时间(当前: {self.sleep_time}秒)\n"
+                             "  其他 - 延后{self.sleep_time}秒\n"
+                             "请输入选择: ").lower()
+                
                 if choice == "n":  # 结束
                     self.shutdown()
                     break
                 elif choice == "y":  # 继续
                     self.running_event.set()
+                elif choice == "s":  # 修改休眠时间
+                    try:
+                        new_sleep = float(input(f"请输入新的休眠时间(秒，当前: {self.sleep_time}): "))
+                        if new_sleep > 0:
+                            self.sleep_time = new_sleep
+                            print(f"休眠时间已更新为{self.sleep_time}秒")
+                        else:
+                            print("休眠时间必须大于0")
+                    except ValueError:
+                        print("请输入有效的数字")
                 else:  # 延后
-                    pass
+                    print(f"系统将延后{self.sleep_time}秒")
         except (KeyboardInterrupt, EOFError):
             self.shutdown()
 
