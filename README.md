@@ -47,7 +47,7 @@ module_registry是核心字典结构，用于：
 ## 使用说明
 1. 克隆项目仓库
 2. 安装依赖：`pip install psutil`
-3. 运行主程序：`python main.py`
+3. 程序入口：main.py
 4. 系统将自动启动所有监控模块
 5. 日志文件将保存在`logs.json`中  # 逻辑有问题，待完善
 
