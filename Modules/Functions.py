@@ -112,7 +112,7 @@ class ProcessMonitor(MonitorBase):  # 示例进程监控器
             try:
                 process = psutil.Process(pid)  # 获取进程对象
                 process_name = process.name()  # 进程名称
-                create_time = round(process.create_time(), 3)  # 进程创建时间
+                create_time = round(process.create_time(), 3)  # 进程创建时间，保留三位小数
                 self.history_processes[pid] = {
                     "process_name": process_name,
                     "create_time": create_time,
@@ -142,7 +142,7 @@ class ProcessMonitor(MonitorBase):  # 示例进程监控器
                 process_name = process_info["process_name"]  # 进程名称
                 runtime = round(
                     time.time() - process_info["create_time"], 3
-                )  # 进程运行时间
+                )  # 进程运行时间，保留三位小数
                 self.add_log_to_buffer(
                     {
                         "pid": pid,
